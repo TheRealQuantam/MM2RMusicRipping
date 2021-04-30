@@ -58,3 +58,20 @@ The next time the game stops should be when it hits the BeginTrack breakpoint. T
 Now that we're starting a real music track, we need to follow the code down to where it accesses the sound table, which shouldn't be too far. You can see at the top of the BeginTrack function the handler code for the aforementioned function codes. Step through the code line by line with F10 until you get to a place resembling the following picture. This line shows the sound table address, which is $8A50 as expected for a Mega Man 2 mod.
 
 ![The Sound Table Address](Step2-2.png "The Sound Table Address")
+
+## Find the Tracks to Rip
+Now that we have the sound table, finding the data for tracks is as easy as looking up the track number in the table. Note, however, that the pointers in the table are stored in "little-endian" order. This means that the low byte is stored first in memory, followed by the high byte; e.g. $ABCD would be stored CD AB.
+
+But before we can look up track numbers in the table, we need to know which track numbers to look up. For this there are two methods.
+
+### Method 1: Play the Game
+The first method is to set a breakpoint in BeginTrack and play the game through, recording the track numbers as new tracks are played. However, breaking every time a music track OR sound effect plays would make the game unplayable. Thus we actually want to set the breakpoint further into the function. Looking at the previous image of the debugger, just after the code that loads the pointer from the sound table is code which reads the first byte of the sound data and checks if it's a music track or a sound effect; specifically, in our example, anyway, we want to break at $8044. This will break only when a new music track begins playing.
+
+However, by this point in the code the track number is unavailable. The track data address is still there (at $e2 in little-endian format, for this example), but to get the track number itself we need to go back a few instructions. Fortunately, Mesen is able to step backwards in the debugger (SHIFT-F10). If we backtrack to $802F, the track number will be in register A.
+
+### Method 2: Play the Music
+An important fact is that when the game is stopped in the debugger we not only can view the values of variables but can also change them. This means when we breakpoint in BeginTrack we can change the track number to be any of the tracks.
+
+For this all that needs to be done is to breakpoint at the start of BeginTrack and wait for it to be called. Once the breakpoint has been hit, the A register box can be clicked on and rewritten with the track to be played, then run it (F5).
+
+This works best in an area where you can generate sound effects at will (e.g. shoot your gun) but not outside your control (e.g. from enemies). Then it's just a matter of starting at track 0 and working your way up, identifying tracks as they're encountered. Keep in mind that the randomizer requires track names, so make sure to identify where each track is played in the game as you listen to them, unless of course it's a track that you're not going to rip.
